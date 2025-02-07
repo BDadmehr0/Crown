@@ -1,5 +1,3 @@
-![art](pxArt.png "pixel art")
-
 # Crown : Secure C/C++ to Rust Code Converter
 
 ## Description
