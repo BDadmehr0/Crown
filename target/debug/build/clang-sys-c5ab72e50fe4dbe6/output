@@ -1,2 +1,0 @@
-cargo:rustc-link-search=/usr/lib
-cargo:rustc-link-lib=dylib=clang
