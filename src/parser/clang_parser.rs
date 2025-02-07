@@ -1,6 +1,4 @@
-use clang_sys::support::Clang;
 use std::path::Path;
-use std::ffi::CString;
 use std::process::{Command, Stdio};
 use std::io::Write; // وارد کردن Write برای استفاده از متد write_all
 
