@@ -1,5 +1,3 @@
-// tests/rewriting_test.rs
-
 use crown::rewriting::rewrite_c_to_rust;
 
 #[test]

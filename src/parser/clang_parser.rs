@@ -1,8 +1,7 @@
 use std::path::Path;
 use std::process::{Command, Stdio};
-use std::io::Write; // وارد کردن Write برای استفاده از متد write_all
+use std::io::Write;
 
-/// این تابع برای تجزیه کد C به صورت یک AST ساده استفاده می‌شود.
 pub fn parse_c_code(code: &str) -> Result<String, String> {
     let path = Path::new("/usr/bin/clang");
 
@@ -14,7 +13,7 @@ pub fn parse_c_code(code: &str) -> Result<String, String> {
         .arg("-")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())  // اضافه کردن stderr
+        .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| e.to_string())?;
 
@@ -31,7 +30,7 @@ pub fn parse_c_code(code: &str) -> Result<String, String> {
 
     let ast = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
 
-    println!("AST Output: {}", ast);  // نمایش کامل خروجی
+    println!("AST Output: {}", ast);
 
     Ok(ast)
 }
