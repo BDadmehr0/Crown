@@ -1,6 +1,7 @@
 [package]
-name = "Crown"
+name = "crown"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clang-sys = "1.8.1"
