@@ -11,6 +11,7 @@ pub fn parse_c_code(code: &str) -> Result<String, String> {
         .arg("c")
         .arg("-ast-dump")
         .arg("-")
+        .arg("-I/usr/include")  // اضافه کردن مسیر هدرها
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -34,8 +35,6 @@ pub fn parse_c_code(code: &str) -> Result<String, String> {
 
     Ok(ast)
 }
-
-
 
 
 #[cfg(test)]

@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 clang-sys = "1.8.1"
-clap = "4.5.28"
+clap = "4.5.32"
