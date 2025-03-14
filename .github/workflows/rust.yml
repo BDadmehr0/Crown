@@ -11,12 +11,21 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install LLVM and Clang
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y llvm clang
+
+    - name: Set LLVM_CONFIG_PATH
+      run: echo "LLVM_CONFIG_PATH=$(which llvm-config)" >> $GITHUB_ENV
+
     - name: Build
       run: cargo build --verbose
+
     - name: Run tests
       run: cargo test --verbose
