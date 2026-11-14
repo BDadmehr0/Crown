@@ -1,47 +1,63 @@
 use clap::{Arg, Command};
-use crown::rewriting::rewrite_c_to_rust;
 use crown::parser::clang_parser::parse_c_code;
+use crown::rewriting::rewrite_c_to_rust;
+use std::error::Error;
+use std::io::{self, Write};
 
 fn main() {
-    let matches = Command::new("Crown")
-        .version("1.0")
-        .about("C/C++ to Rust Code Converter")
+    if let Err(error) = run() {
+        eprintln!("crown: {error}");
+        std::process::exit(1);
+    }
+}
+
+fn run() -> Result<(), Box<dyn Error>> {
+    let matches = Command::new("crown")
+        .version(env!("CARGO_PKG_VERSION"))
+        .about("Experimental, conservative C-to-Rust source converter")
+        .long_about(
+            "Converts a documented subset of C to Rust. This is not a general C/C++\n             translator; review the generated Rust and manually port unsupported code.",
+        )
         .arg(
             Arg::new("input")
                 .short('i')
                 .long("input")
                 .value_name("FILE")
-                .help("The C/C++ file to convert")
-                .num_args(1),  // تغییر این بخش
+                .help("C source file to convert")
+                .required(true),
         )
         .arg(
             Arg::new("output")
                 .short('o')
                 .long("output")
                 .value_name("FILE")
-                .help("The file to save the converted Rust code")
-                .num_args(1),  // تغییر این بخش
+                .help("Rust output file (defaults to standard output; use - for stdout)"),
         )
         .get_matches();
 
-    let input_file = matches.get_one::<String>("input").unwrap_or_else(|| {
-        eprintln!("Error: Missing input file. Use -i <file> or --input <file>");
-        std::process::exit(1);
-    });
+    let input_path = matches.get_one::<String>("input").expect("required by clap");
+    let source = std::fs::read_to_string(input_path)?;
+    let source = parse_c_code(&source)?;
+    let converted = rewrite_c_to_rust(&source);
 
-    let output_file = matches.get_one::<String>("output").expect("Missing output file");
-    
-    let input_code = std::fs::read_to_string(input_file)
-        .expect("Failed to read input file");
+    if let Some(output_path) = matches.get_one::<String>("output") {
+        if output_path == "-" {
+            io::stdout().write_all(converted.as_bytes())?;
+        } else {
+            std::fs::write(output_path, converted.as_bytes())?;
+            eprintln!("Crown wrote converted source to {output_path}");
+        }
+    } else {
+        io::stdout().write_all(converted.as_bytes())?;
+    }
 
-    let ast = parse_c_code(&input_code).expect("Failed to parse C code");
-
-    let converted_code = rewrite_c_to_rust(&ast);
-
-
-    std::fs::write(output_file, converted_code)
-        .expect("Failed to write output file");
-
-    println!("Code has been converted and saved to {}", output_file);
+    if source.contains("malloc(")
+        || source.contains("free(")
+        || source.contains("->")
+        || source.contains("*")
+    {
+        eprintln!("warning: pointer or allocation code may not have been translated; inspect the output manually");
+    }
+    eprintln!("warning: Crown supports only a small C subset; generated Rust requires review and may need manual fixes");
+    Ok(())
 }
-
