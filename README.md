@@ -1,72 +1,58 @@
 # Crown
 
-Crown is an **experimental, conservative C-to-Rust source converter**. It demonstrates a small set of straightforward rewrites; it is not a general C/C++ transpiler, compiler, or security tool. Converted code must be reviewed, completed, and tested by a Rust developer.
+Crown is an experimental C-to-Rust converter for common, small console programs. It performs source-level rewrites; it is not a complete C/C++ compiler or a security tool. Generated code must be reviewed, compiled, behavior-tested, and manually audited.
 
-## Current scope
+## Supported subset
 
-Crown currently recognizes a deliberately narrow subset:
+The converter currently handles these common patterns when written in a straightforward, one-statement-per-line style:
 
-- `int main()` / `int main(void)` and simple `int` function signatures/parameters;
-- simple `int` local declarations;
-- basic ascending integer `for` loops (`i++` or `i += 1`);
-- simple `printf` calls with a string literal, optionally using `%d`, `%i`, or `%s` and one argument;
-- `return 0;` in `main` and preprocessor directive lines (such as `#include`).
+- `main` and simple functions with scalar parameters/return types;
+- scalar local declarations, including comma-separated variables, and fixed-size one- or multi-dimensional arrays with brace initializers;
+- simple `if`, `else if`, `while`, `do`/`while`, and monotonic `for` loops using `<`, `<=`, `>`, or `>=` with `++`, `--`, or a literal step;
+- basic `switch` statements with single `case` labels and `break`, plus simple ternary expressions;
+- standalone `++` / `--` statements;
+- `printf` with common `%d`, `%i`, `%u`, `%f`, `%lf`, `%c`, `%s`, `%x`, `%X`, `%o` and `%%` formats, including multiple arguments;
+- token-based `%d`, `%i`, `%u`, `%f`, `%lf`, `%c`, and `%s` `scanf` input in `main`;
+- `return 0;` from `main` and simple `#include` removal.
 
-Unsupported lines are generally preserved instead of being guessed at. In particular, Crown does **not** translate pointer ownership, `malloc`/`free`, structs, macros, arbitrary expressions, most library calls, or C++. Removing a header directive does not port the declarations it provided. Output can therefore be invalid Rust and is never guaranteed safe or behaviorally equivalent.
-
-The input preflight checks balanced delimiters and terminated strings/comments. It is not a full C parser and does not type-check or compile the input.
-
-## Requirements
-
-- Rust and Cargo (stable; edition 2021).
-- No external Clang/LLVM installation is needed.
-
-## Build and test
-
-```sh
-cargo test
-cargo build --release
-```
-
-## Usage
-
-Write to standard output:
-
-```sh
-cargo run -- -i input.c
-```
-
-Write to a file:
-
-```sh
-cargo run -- -i input.c -o output.rs
-```
-
-Use `-o -` to explicitly select standard output. Errors are reported on standard error with a non-zero exit status. Crown also prints a reminder to review every conversion.
-
-For example, this input:
+For example, this program:
 
 ```c
 #include <stdio.h>
 int main() {
-    printf("hello");
+    int number1, number2, sum;
+    printf("Enter two integers: ");
+    scanf("%d %d", &number1, &number2);
+    sum = number1 + number2;
+    printf("%d + %d = %d", number1, number2, sum);
     return 0;
 }
 ```
 
-converts to:
+converts to Rust with mutable `i32` locals, line-based stdin token parsing, and Rust formatting macros. The generated version is saved as [tests/output.rs](tests/output.rs), with the C fixture in [tests/input.c](tests/input.c).
 
-```rust
-fn main() {
-    println!("hello");
-}
+## Important limitations
+
+C and Rust have different type systems, memory models, and runtime behavior. There is no universal syntax-to-syntax conversion that can make arbitrary C valid and safe Rust. Crown currently does not translate pointer ownership, structs, unions, enums, function pointers, macros, dynamic allocation, file I/O, complex declarators, or most library APIs. C format strings and input behavior are only approximated for the listed conversions. Unsupported lines may remain C and make the output fail to compile; even compilable output may change behavior. The preflight parser checks only delimiter/string/comment balance, not C syntax or types.
+
+Crown emits a general review warning. Do not treat generated output as safe or production-ready without review.
+
+## Requirements and usage
+
+Requires stable Rust and Cargo; no Clang/LLVM installation is needed.
+
+```sh
+cargo test
+cargo build --release
+cargo run -- -i input.c                 # write Rust to stdout
+cargo run -- -i input.c -o output.rs    # write Rust to a file
 ```
 
-Always run `rustfmt`, compile the generated Rust, compare behavior with the original program, and manually audit memory safety and error handling before using it.
+Use `-o -` to explicitly select stdout. Errors are reported on stderr with a non-zero exit status. Run `rustfmt`, compile the generated Rust, compare behavior against the C program, and manually audit memory safety before using it.
 
 ## Contributing
 
-Contributions are welcome. Please add tests for supported transformations and clearly document unsupported or behavior-changing cases. A converter rule must not imply that raw pointers or manual allocation have become safe automatically.
+Contributions are welcome. Add regression tests for each new conversion and document behavior changes and unsupported cases. Never imply that translating a pointer or allocation expression automatically makes it safe.
 
 ## License
 

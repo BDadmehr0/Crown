@@ -54,7 +54,6 @@ fn run() -> Result<(), Box<dyn Error>> {
     if source.contains("malloc(")
         || source.contains("free(")
         || source.contains("->")
-        || source.contains("*")
     {
         eprintln!("warning: pointer or allocation code may not have been translated; inspect the output manually");
     }
