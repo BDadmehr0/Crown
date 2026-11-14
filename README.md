@@ -70,4 +70,4 @@ Contributions are welcome. Please add tests for supported transformations and cl
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+GPL-3.0. See [LICENSE](LICENSE).
