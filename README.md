@@ -1,29 +1,73 @@
-> [!WARNING]  
-> Not completed under development
+# Crown
 
-# Crown : Secure C/C++ to Rust Code Converter
+Crown is an **experimental, conservative C-to-Rust source converter**. It demonstrates a small set of straightforward rewrites; it is not a general C/C++ transpiler, compiler, or security tool. Converted code must be reviewed, completed, and tested by a Rust developer.
 
-## Description
-Crown is an innovative tool designed to convert legacy C and C++ codebases into secure and efficient Rust code. With Rust gaining traction for its superior memory management and safety features, Crown helps developers seamlessly migrate their existing projects to Rust, enabling them to take advantage of its performance and security benefits without rewriting everything from scratch.
+## Current scope
 
-The converter analyzes C/C++ code to identify common patterns and constructs, automatically transforming them into their secure, idiomatic Rust equivalents. In cases where automatic conversion might fall short, Crown also generates detailed reports highlighting sections that require manual review.
+Crown currently recognizes a deliberately narrow subset:
 
-## Features
-- **Code Analysis:** Parses C/C++ code to identify language structures and common idioms.
-- **Automatic Conversion:** Translates recognized patterns into secure Rust code.
-- **Review Reporting:** Flags code sections that might need manual adjustments for enhanced safety.
-- **Command-Line Interface (CLI):** Provides a user-friendly interface for easy integration into existing workflows.
+- `int main()` / `int main(void)` and simple `int` function signatures/parameters;
+- simple `int` local declarations;
+- basic ascending integer `for` loops (`i++` or `i += 1`);
+- simple `printf` calls with a string literal, optionally using `%d`, `%i`, or `%s` and one argument;
+- `return 0;` in `main` and preprocessor directive lines (such as `#include`).
 
-## Benefits
-- **Effortless Migration:** Simplifies the process of transitioning legacy C/C++ projects to Rust.
-- **Enhanced Safety:** Leverages Rust's robust safety features to improve code reliability.
-- **Improved Performance:** Reduces memory management errors and enhances overall code stability.
+Unsupported lines are generally preserved instead of being guessed at. In particular, Crown does **not** translate pointer ownership, `malloc`/`free`, structs, macros, arbitrary expressions, most library calls, or C++. Removing a header directive does not port the declarations it provided. Output can therefore be invalid Rust and is never guaranteed safe or behaviorally equivalent.
 
-## Getting Started
-*Installation and usage instructions will be provided soon.*
+The input preflight checks balanced delimiters and terminated strings/comments. It is not a full C parser and does not type-check or compile the input.
+
+## Requirements
+
+- Rust and Cargo (stable; edition 2021).
+- No external Clang/LLVM installation is needed.
+
+## Build and test
+
+```sh
+cargo test
+cargo build --release
+```
+
+## Usage
+
+Write to standard output:
+
+```sh
+cargo run -- -i input.c
+```
+
+Write to a file:
+
+```sh
+cargo run -- -i input.c -o output.rs
+```
+
+Use `-o -` to explicitly select standard output. Errors are reported on standard error with a non-zero exit status. Crown also prints a reminder to review every conversion.
+
+For example, this input:
+
+```c
+#include <stdio.h>
+int main() {
+    printf("hello");
+    return 0;
+}
+```
+
+converts to:
+
+```rust
+fn main() {
+    println!("hello");
+}
+```
+
+Always run `rustfmt`, compile the generated Rust, compare behavior with the original program, and manually audit memory safety and error handling before using it.
 
 ## Contributing
-Contributions are welcome! If you'd like to help improve Crown, please fork the repository and submit your pull requests. For major changes, open an issue first to discuss your ideas.
+
+Contributions are welcome. Please add tests for supported transformations and clearly document unsupported or behavior-changing cases. A converter rule must not imply that raw pointers or manual allocation have become safe automatically.
 
 ## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+MIT. See [LICENSE](LICENSE).

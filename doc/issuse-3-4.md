@@ -1,4 +1,3 @@
-issuse-3-4.md
+# Historical development notes (superseded)
 
-شما قاعده‌های بازنویسی برای تبدیل کد C/C++ به کد امن Rust (مانند تبدیل malloc به Box::new) پیاده‌سازی کرده‌اید.
-تست‌ها به درستی عبور کرده‌اند و همه بخش‌ها به درستی عمل می‌کنند.
+The early prototype used text substitutions such as replacing `malloc` with `Box::new`. That rewrite was not semantically or memory-safe and has been removed. Crown now leaves pointer and allocation code visible for manual review. See the README for current behavior and limitations.

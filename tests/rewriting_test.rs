@@ -1,22 +1,25 @@
 use crown::rewriting::rewrite_c_to_rust;
 
 #[test]
-fn test_rewrite_pointer() {
-    let c_code = "int* ptr;";
-    let rust_code = rewrite_c_to_rust(c_code);
-    assert_eq!(rust_code, "&i32 ptr;");
+fn translates_basic_main_and_output() {
+    let source = "#include <stdio.h>\nint main() {\n    printf(\"hello\");\n    return 0;\n}\n";
+    assert_eq!(
+        rewrite_c_to_rust(source),
+        "fn main() {\n    println!(\"hello\");\n}\n"
+    );
 }
 
 #[test]
-fn test_rewrite_malloc() {
-    let c_code = "malloc(sizeof(int));";
-    let rust_code = rewrite_c_to_rust(c_code);
-    assert_eq!(rust_code, "Box::new(sizeof(i32));");
+fn translates_integer_declarations_and_loops() {
+    let source = "int main() {\n    int sum = 0;\n    for (int i = 0; i < n; i++) {\n    }\n    return 0;\n}";
+    assert_eq!(
+        rewrite_c_to_rust(source),
+        "fn main() {\n    let mut sum: i32 = 0;\n    for i in 0..n {\n    }\n}"
+    );
 }
 
 #[test]
-fn test_rewrite_for_loop() {
-    let c_code = "for (int i = 0; i < n; i++) { ... }";
-    let rust_code = rewrite_c_to_rust(c_code);
-    assert_eq!(rust_code, "for i in 0..n { ... }");
+fn keeps_unsupported_pointer_code_visible() {
+    let source = "int* ptr;\nptr = malloc(sizeof(int));";
+    assert_eq!(rewrite_c_to_rust(source), source);
 }
